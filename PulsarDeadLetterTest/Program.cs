@@ -13,9 +13,10 @@ namespace PulsarDeadLetterTest
     {
         static async Task Main(string[] args)
         {
-            var topic = "test";
-            var deadLetterTopic = $"{topic}-{subscription}-DLQ";
             var subscription = "pulsar-dead-letter-tester";
+            var topic = "public/default/test";
+            var deadLetterTopic = $"{topic}-{subscription}-DLQ";
+            
 
             await CreateTopic(topic);
             await CreateTopic(deadLetterTopic);
@@ -23,11 +24,11 @@ namespace PulsarDeadLetterTest
             string serviceUrl = "pulsar://pulsar:6650";
             PulsarClient client = new PulsarClientBuilder().ServiceUrl(serviceUrl).Build();
 
-            var producer = await client.NewProducer().CreateAsync();
+            var producer = await client.NewProducer().Topic(topic).CreateAsync();
 
-            var consumer = await client.NewConsumer().ConsumerName("test").SubscriptionName(subscription).DeadLetterPolicy(new DeadLetterPolicy(1, deadLetterTopic)).SubscribeAsync();
+            var consumer = await client.NewConsumer().Topic(topic).ConsumerName("test").SubscriptionName(subscription).DeadLetterPolicy(new DeadLetterPolicy(1, deadLetterTopic)).SubscribeAsync();
 
-            await producer.SendAsync(System.Text.Encoding.UTF8.GetBytes(Guid.NewGuid().ToString());
+            await producer.SendAsync(System.Text.Encoding.UTF8.GetBytes(Guid.NewGuid().ToString()));
 
             var nackCount = 0;
             while(true)
@@ -36,7 +37,7 @@ namespace PulsarDeadLetterTest
 
                 Console.WriteLine($"Received Message {message.MessageId}");
 
-                await consumer.NegativeAcknowledge(message);
+                await consumer.NegativeAcknowledge(message.MessageId);
 
                 nackCount++;
                 Console.WriteLine($"Nacked Cound: {nackCount}");
@@ -64,7 +65,7 @@ namespace PulsarDeadLetterTest
                 if (sw.Elapsed > TimeSpan.FromMinutes(1)) throw;
 
                 await Task.Delay(TimeSpan.FromSeconds(5));
-                CreateTopic(topic);
+                await CreateTopic(topic);
             }
         }
     }

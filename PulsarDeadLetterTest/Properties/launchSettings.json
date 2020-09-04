@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "PulsarDeadLetterTest": {
+      "commandName": "Project"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}
